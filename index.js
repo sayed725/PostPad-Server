@@ -75,7 +75,7 @@ async function run() {
         res.send(result);
       });
 
-      
+
   
       app.get('/users/admin/:email', verifyToken, async (req, res) => {
         const email = req.params.email;
@@ -91,6 +91,23 @@ async function run() {
           admin = user?.role === 'admin';
         }
         res.send({ admin });
+      })
+
+    //   member or not verify 
+      app.get('/users/member/:email', verifyToken, async (req, res) => {
+        const email = req.params.email;
+  
+        if (email !== req.decoded.email) {
+          return res.status(403).send({ message: 'forbidden access' })
+        }
+  
+        const query = { email: email };
+        const user = await userCollection.findOne(query);
+        let member = false;
+        if (user) {
+          member = user?.role === 'gold';
+        }
+        res.send({ member });
       })
 
 
