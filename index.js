@@ -33,11 +33,12 @@ async function run() {
     await client.connect();
 
     const userCollection = client.db("postPasDb").collection("users");
+    const tagCollection = client.db("postPasDb").collection("tags");
 
      // jwt related api
      app.post('/jwt', async (req, res) => {
         const user = req.body;
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' });
         res.send({ token });
       })
 
@@ -113,14 +114,9 @@ async function run() {
 
 
 
-
-
-
-
     app.post('/users', async (req, res) => {
         const user = req.body;
-        // insert email if user doesnt exists: 
-        // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+        // insert email if user not exists: 
         const query = { email: user.email }
         const existingUser = await userCollection.findOne(query);
         if (existingUser) {
@@ -138,6 +134,23 @@ async function run() {
 
 
 
+    //  admin related api 
+
+    // add tags 
+    app.post('/tags',async(req,res)=>{
+        const { name } = req.body
+        const existingTag = await tagCollection.findOne({ name });
+        if (existingTag) {
+            return res.send({ message: 'tag already exists' })
+          }
+        const result = await tagCollection.insertOne({name})
+        res.send(result)
+    })
+
+    app.get('/tags',async(req,res)=>{
+        const result = await tagCollection.find().toArray();
+        res.send(result);
+    })
 
 
 
