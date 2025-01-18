@@ -34,6 +34,7 @@ async function run() {
 
     const userCollection = client.db("postPasDb").collection("users");
     const tagCollection = client.db("postPasDb").collection("tags");
+    const postCollection = client.db("postPasDb").collection("posts");
 
      // jwt related api
      app.post('/jwt', async (req, res) => {
@@ -137,20 +138,45 @@ async function run() {
     //  admin related api 
 
     // add tags 
-    app.post('/tags',async(req,res)=>{
-        const { name } = req.body
-        const existingTag = await tagCollection.findOne({ name });
+    app.post('/tags',verifyToken, verifyAdmin,async(req,res)=>{
+        const { tagname } = req.body
+        const existingTag = await tagCollection.findOne({ tagname });
         if (existingTag) {
             return res.send({ message: 'tag already exists' })
           }
-        const result = await tagCollection.insertOne({name})
+        const result = await tagCollection.insertOne({tagname})
         res.send(result)
     })
+
+   
 
     app.get('/tags',async(req,res)=>{
         const result = await tagCollection.find().toArray();
         res.send(result);
     })
+
+
+
+    // user post related api 
+
+    // add a post 
+
+    app.get('/post', async (req, res) => {
+        const result = await postCollection.find().toArray();
+        res.send(result);
+      });
+  
+
+
+    app.post('/add-post', verifyToken, async (req, res) => {
+        const post= req.body;
+        const result = await postCollection.insertOne(post);
+        res.send(result);
+      });
+
+
+
+
 
 
 
