@@ -203,6 +203,49 @@ async function run() {
       });
 
 
+    //   add vpvote 
+
+    // app.put('/post/upvote', async(req,res)=>{
+    //     const postId = new ObjectId(req.body._id);
+    //     await postCollection.updateOne(
+    //         { _id: postId },
+    //         { $inc: { upVote: 1 } } // Increment downvote count by 1
+    //     );
+
+    //     const result = await postCollection.findOne({ _id: postId })
+    //     res.send(result)
+    // })
+
+
+    app.put('/post/upvote', async(req,res)=>{
+       const id = req.body._id
+    //    console.log(id)
+       const filter = { _id: new ObjectId(id) }
+
+
+       const updatedDoc = {
+        $inc: { upVote: 1}
+       }
+       const result = await postCollection.updateOne(filter, updatedDoc);
+
+        res.send(result)
+    })
+
+    app.put('/post/dawnvote', async(req,res)=>{
+       const id = req.body._id
+    //    console.log(id)
+       const filter = { _id: new ObjectId(id) }
+
+
+       const updatedDoc = {
+        $inc: { dawnVote: 1}
+       }
+       const result = await postCollection.updateOne(filter, updatedDoc);
+
+        res.send(result)
+    })
+
+
 
 
 
