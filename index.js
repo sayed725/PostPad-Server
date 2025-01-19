@@ -15,7 +15,7 @@ app.use(express.json());
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nb52s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -161,10 +161,17 @@ async function run() {
 
     // add a post 
 
-    app.get('/post', async (req, res) => {
-        const result = await postCollection.find().toArray();
+    app.get('/posts', async (req, res) => {
+        const result = await postCollection.find().sort({ time: -1 }).toArray();
         res.send(result);
       });
+
+     app.get('/posts/:id',async(req,res)=>{
+        const id = req.params.id
+        const query = { _id: new ObjectId(id) }
+        const result = await postCollection.findOne(query)
+        res.send(result)
+     }) 
   
 
 
