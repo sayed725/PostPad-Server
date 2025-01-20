@@ -35,6 +35,7 @@ async function run() {
     const userCollection = client.db("postPasDb").collection("users");
     const tagCollection = client.db("postPasDb").collection("tags");
     const postCollection = client.db("postPasDb").collection("posts");
+    const commentCollection = client.db("postPasDb").collection("comments");
 
      // jwt related api
      app.post('/jwt', async (req, res) => {
@@ -253,6 +254,15 @@ async function run() {
 
         res.send(result)
     })
+
+
+    // comments related api 
+
+    app.post('/add-comment', async (req, res) => {
+        const comment = req.body;
+        const result = await commentCollection.insertOne(comment);
+        res.send(result);
+      });
 
 
 
