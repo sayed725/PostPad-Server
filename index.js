@@ -183,7 +183,15 @@ async function run() {
     // add a post 
 
     app.get('/posts', async (req, res) => {
-        const result = await postCollection.find().sort({ time: -1 }).toArray();
+        const search = req.query.search;
+       
+
+        let query = {
+            usedTag: {
+              $regex: search,
+              $options: 'i',
+            }}
+        const result = await postCollection.find(query).sort({ time: -1 }).toArray();
         res.send(result);
       });
 
@@ -216,7 +224,7 @@ async function run() {
     //     res.send(result)
     // })
 
-
+    //  add upvote 
     app.put('/post/upvote', async(req,res)=>{
        const id = req.body._id
     //    console.log(id)
@@ -231,6 +239,7 @@ async function run() {
         res.send(result)
     })
 
+    // add dawn vote 
     app.put('/post/dawnvote', async(req,res)=>{
        const id = req.body._id
     //    console.log(id)
