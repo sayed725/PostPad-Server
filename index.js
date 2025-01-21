@@ -148,6 +148,22 @@ async function run() {
         const result = await userCollection.insertOne(user);
         res.send(result);
       });
+
+
+
+    //   add 3 post for a specific user 
+
+    app.get('/post/:email', verifyToken, async (req, res) => {
+        const email = req.params.email;
+  
+       
+  
+  
+        const query = { authorEmail: email };
+        const result = await postCollection.find(query).sort({ time: -1 }).limit(3).toArray();
+        res.send(result);
+      });
+  
   
 
 
@@ -226,7 +242,7 @@ async function run() {
     // })
 
     //  add upvote 
-    app.put('/post/upvote', async(req,res)=>{
+    app.put('/post/upvote', verifyToken,async(req,res)=>{
        const id = req.body._id
     //    console.log(id)
        const filter = { _id: new ObjectId(id) }
@@ -241,7 +257,7 @@ async function run() {
     })
 
     // add dawn vote 
-    app.put('/post/dawnvote', async(req,res)=>{
+    app.put('/post/dawnvote',verifyToken, async(req,res)=>{
        const id = req.body._id
     //    console.log(id)
        const filter = { _id: new ObjectId(id) }
@@ -258,11 +274,23 @@ async function run() {
 
     // comments related api 
 
-    app.post('/add-comment', async (req, res) => {
+    app.post('/add-comment', verifyToken,async (req, res) => {
         const comment = req.body;
         const result = await commentCollection.insertOne(comment);
         res.send(result);
       });
+
+
+      app.get('/comments', async (req, res) => {
+        const id = req.query.id;
+
+        // console.log(id)
+        const query = { postId: id };
+        const result = await commentCollection.find(query).sort({ commentTime: -1 }).toArray();
+        res.send(result);
+      }); 
+
+      
 
 
 
