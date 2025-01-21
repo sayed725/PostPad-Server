@@ -156,15 +156,30 @@ async function run() {
     app.get('/post/:email', verifyToken, async (req, res) => {
         const email = req.params.email;
   
-       
-  
-  
         const query = { authorEmail: email };
         const result = await postCollection.find(query).sort({ time: -1 }).limit(3).toArray();
         res.send(result);
       });
+
+
+    //   all post for the user 
+
+
+  app.get('/allpost/:email', verifyToken, async (req, res) => {
+        const email = req.params.email;
   
-  
+        const query = { authorEmail: email };
+        const result = await postCollection.find(query).sort({ time: -1 }).toArray();
+        res.send(result);
+      });
+//   delete post 
+
+app.delete('/post/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) }
+    const result = await postCollection.deleteOne(query);
+    res.send(result);
+  })
 
 
 
