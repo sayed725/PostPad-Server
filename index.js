@@ -353,6 +353,26 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
     })
 
 
+    app.get('/report', verifyToken,verifyAdmin,async(req,res) =>{
+        const result = await reportCollection.find().toArray();
+        res.send(result);
+    })
+
+    // remove a comment 
+
+    app.delete('/remove-comment/:id', verifyToken,verifyAdmin, async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await commentCollection.deleteOne(query);
+        res.send(result);
+      })
+    app.delete('/remove-report/:id', verifyToken,verifyAdmin, async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await reportCollection.deleteOne(query);
+        res.send(result);
+      })
+
 
 
 
