@@ -37,6 +37,7 @@ async function run() {
     const tagCollection = client.db("postPasDb").collection("tags");
     const postCollection = client.db("postPasDb").collection("posts");
     const commentCollection = client.db("postPasDb").collection("comments");
+    const reportCollection = client.db("postPasDb").collection("report");
 
      // jwt related api
      app.post('/jwt', async (req, res) => {
@@ -313,7 +314,7 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       app.post('/create-payment-intent', async (req, res) => {
         const { price } = req.body;
         const amount = parseInt(price * 100);
-        console.log(amount, 'amount inside the intent')
+        // console.log(amount, 'amount inside the intent')
   
         const paymentIntent = await stripe.paymentIntents.create({
           amount: amount,
@@ -330,17 +331,28 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
      // change user role to member 
 
      app.patch('/payment/:email', verifyToken, async (req, res) => {
-        const email = req.params.id;
+        const email = req.params.email;
         const filter = { email: email };
         const updatedDoc = {
           $set: {
-            role: 'member'
+            role: 'gold'
           }
         }
         const result = await userCollection.updateOne(filter, updatedDoc);
         res.send(result);
       })
       
+
+    //   report related api 
+
+    app.post('/report', verifyToken,async(req,res)=>{
+        const report = req.body
+        const result = await reportCollection.insertOne(report);
+        res.send(result);
+
+    })
+
+
 
 
 
