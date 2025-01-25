@@ -219,6 +219,8 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
     app.get('/posts', async (req, res) => {
         const search = req.query.search;
+        const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
        
 
         let query = {
@@ -226,9 +228,14 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
               $regex: search,
               $options: 'i',
             }}
-        const result = await postCollection.find(query).sort({ time: -1 }).toArray();
+        const result = await postCollection.find(query)
+        .skip(page * size)
+        .limit(size)   
+        .sort({ time: -1 }).toArray();
         res.send(result);
       });
+
+
 
      app.get('/posts/:id',async(req,res)=>{
         const id = req.params.id
@@ -405,6 +412,12 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       app.get('/announcement', async (req, res) => {
         const result = await announcementCollection.find().sort({ date: -1 }).toArray();
         res.send(result);
+      })
+
+      // pagination 
+      app.get('/postsCount', async (req, res) => {
+        const count = await postCollection.estimatedDocumentCount();
+        res.send({ count });
       })
 
 
