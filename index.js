@@ -175,6 +175,20 @@ async function run() {
         const result = await postCollection.find(query).sort({ time: -1 }).toArray();
         res.send(result);
       });
+
+  // post count for a user
+  app.get('/postCount/:email', verifyToken, async (req, res) => {
+        const email = req.params.email;
+
+        // console.log(email)
+  
+        const postCount = await postCollection.countDocuments({ authorEmail: email });
+
+        res.send({ postCount });
+        
+      });
+
+
 //   delete post 
 
 app.delete('/post/:id', verifyToken, async (req, res) => {
