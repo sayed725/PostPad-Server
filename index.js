@@ -217,23 +217,66 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
     // add a post 
 
-    app.get('/posts', async (req, res) => {
-        const search = req.query.search;
-        const page = parseInt(req.query.page);
-      const size = parseInt(req.query.size);
+    // app.get('/posts', async (req, res) => {
+    //     const search = req.query.search;
+    //     const page = parseInt(req.query.page);
+    //   const size = parseInt(req.query.size);
        
 
-        let query = {
-            usedTag: {
-              $regex: search,
-              $options: 'i',
-            }}
-        const result = await postCollection.find(query)
-        .skip(page * size)
-        .limit(size)   
-        .sort({ time: -1 }).toArray();
+    //     let query = {
+    //         usedTag: {
+    //           $regex: search,
+    //           $options: 'i',
+    //         }}
+    //     const result = await postCollection.find(query)
+    //     .skip(page * size)
+    //     .limit(size)   
+    //     .sort({ time: -1 }).toArray();
+    //     res.send(result);
+    //   });
+
+
+
+    app.get('/posts', async (req, res) => {
+    
+        const search = req.query.search || ""; 
+        const sort = req.query.sort || "time"; 
+        const page = parseInt(req.query.page) || 0; 
+        const size = parseInt(req.query.size) || 5; 
+    
+        //  aggregation pipeline
+        const aggregationPipeline = [
+        
+          {
+            $match: {
+              usedTag: { $regex: search, $options: "i" } 
+            }
+          },
+          
+          {
+            $addFields: {
+              voteDifference: { $subtract: ["$upVote", "$dawnVote"] }
+            }
+          },
+          
+          {
+            $sort: sort === "popularity" ? { voteDifference: -1 } : { time: -1 }
+          },
+         
+          {
+            $skip: page * size
+          },
+          {
+            $limit: size
+          }
+        ];
+    
+       
+        const result = await postCollection.aggregate(aggregationPipeline).toArray();
+    
+        
         res.send(result);
-      });
+      })
 
 
 
