@@ -38,6 +38,7 @@ async function run() {
     const postCollection = client.db("postPasDb").collection("posts");
     const commentCollection = client.db("postPasDb").collection("comments");
     const reportCollection = client.db("postPasDb").collection("report");
+    const announcementCollection = client.db("postPasDb").collection("announcement");
 
      // jwt related api
      app.post('/jwt', async (req, res) => {
@@ -347,6 +348,16 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
     app.post('/report', verifyToken,async(req,res)=>{
         const report = req.body
+
+        // not duplicate report
+
+        const query = { reportCommentId: report.reportCommentId }
+        const existingReport = await reportCollection.findOne(query);
+        if (existingReport) {
+          return res.send({ message: 'Comment Already reported', insertedId: null })
+        }
+
+
         const result = await reportCollection.insertOne(report);
         res.send(result);
 
@@ -366,6 +377,7 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
         const result = await commentCollection.deleteOne(query);
         res.send(result);
       })
+
     app.delete('/remove-report/:id', verifyToken,verifyAdmin, async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) }
@@ -373,7 +385,27 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
         res.send(result);
       })
 
+      // remove user 
 
+      app.delete('/remove-user/:email', verifyToken,verifyAdmin, async (req, res) => {
+        const email = req.params.email;
+        const query = { email: email }
+        const result = await userCollection.deleteOne(query);
+        res.send(result);
+      })
+
+      // announcement related api
+
+      app.post('/add-announcement', verifyToken,verifyAdmin, async (req, res) => {
+        const announcement = req.body;
+        const result = await announcementCollection.insertOne(announcement);
+        res.send(result);
+      })
+
+      app.get('/announcement', async (req, res) => {
+        const result = await announcementCollection.find().sort({ date: -1 }).toArray();
+        res.send(result);
+      })
 
 
 
