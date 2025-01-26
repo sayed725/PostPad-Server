@@ -478,6 +478,38 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       })
 
 
+        // stats or analytics
+    app.get('/admin-stats', verifyToken, verifyAdmin, async (req, res) => {
+      const users = await userCollection.estimatedDocumentCount();
+      const posts = await postCollection.estimatedDocumentCount();
+      const comments = await commentCollection.estimatedDocumentCount();
+      const reports = await reportCollection.estimatedDocumentCount();
+
+
+      const result = await postCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalVotes: {
+              $sum: { $add: ["$upVote", "$dawnVote"] } 
+            }
+          }
+        }
+      ]).toArray();
+
+      
+      const totalVotes = result[0]?.totalVotes || 0;
+      // console.log(totalVotes)
+
+
+
+
+
+
+      res.send({ users, posts, comments, reports, totalVotes });
+    })
+
+
 
 
 
