@@ -17,6 +17,7 @@ app.use(express.json());
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { default: axios } = require('axios');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nb52s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -39,6 +40,55 @@ async function run() {
     const commentCollection = client.db("postPasDb").collection("comments");
     const reportCollection = client.db("postPasDb").collection("report");
     const announcementCollection = client.db("postPasDb").collection("announcement");
+
+
+//     Store ID: postp68d23450a852b
+// Store Password (API/Secret Key): postp68d23450a852b@ssl
+
+
+// Merchant Panel URL: https://sandbox.sslcommerz.com/manage/ (Credential as you inputted in the time of registration)
+
+
+ 
+// Store name: testpostpvtgt
+// Registered URL: https://post-pad.web.app/
+// Session API to generate transaction: https://sandbox.sslcommerz.com/gwprocess/v3/api.php
+// Validation API: https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?wsdl
+// Validation API (Web Service) name: https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php
+ 
+// You may check our plugins available for multiple carts and libraries: https://github.com/sslcommerz
+
+
+// step-1:  initiate the payment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
      // jwt related api
      app.post('/jwt', async (req, res) => {
@@ -401,6 +451,98 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
           clientSecret: paymentIntent.client_secret
         })
       });
+
+
+      // ssl payment \
+
+      app.post('/create-ssl-payment', async (req, res) => {
+        const payment = req.body;
+        // console.log('payment info', payment)
+
+        const trxid = new ObjectId().toString();
+
+        const initiate = {
+
+        store_id:'postp68d23450a852b',
+        store_passwd:'postp68d23450a852b@ssl',
+
+
+
+        total_amount: payment.amount,
+        currency: 'BDT',
+        tran_id: trxid, // use unique tran_id for each api call
+        success_url: `${process.env.SERVER_BASE_URL}/success-payment`,
+        fail_url: `${process.env.LIVE_BASE_URL}/fail`,
+        cancel_url: `${process.env.LIVE_BASE_URL}/cancel`,
+        ipn_url: `${process.env.SERVER_BASE_URL}/ipn-success-payment`,
+        shipping_method: 'Courier',
+        product_name: 'MemberShip',
+        product_category: 'Service',
+        product_profile: 'general',
+        cus_name: `${payment.name}`,
+        cus_email: `${payment.email}`,
+        cus_add1: 'Dhaka',
+        cus_add2: 'Dhaka',
+        cus_city: 'Dhaka',
+        cus_state: 'Dhaka',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: '01711111111',
+        cus_fax: '01711111111',
+        ship_name: 'Customer Name',
+        ship_add1: 'Dhaka',
+        ship_add2: 'Dhaka',
+        ship_city: 'Dhaka',
+        ship_state: 'Dhaka',
+        ship_postcode: 1000,
+        ship_country: 'Bangladesh',
+        }
+
+
+        const iniResponse = await axios({
+            url:'https://sandbox.sslcommerz.com/gwprocess/v4/api.php',
+            method: 'POST',
+            data: initiate,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+        })
+
+      //  console.log(iniResponse,'iniresponse data inside the ssl')
+
+
+
+       const gatewayURL = iniResponse?.data?.GatewayPageURL;
+
+      //  console.log(gatewayURL,'gateway url')
+
+
+
+       
+      })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
      // change user role to member 
