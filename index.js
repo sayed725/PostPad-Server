@@ -13,6 +13,7 @@ const port = process.env.PORT || 5001
 // middle ware 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded());
 
 
 
@@ -40,6 +41,7 @@ async function run() {
     const commentCollection = client.db("postPasDb").collection("comments");
     const reportCollection = client.db("postPasDb").collection("report");
     const announcementCollection = client.db("postPasDb").collection("announcement");
+    const paymentCollection = client.db("postPasDb").collection("payments");
 
 
 //     Store ID: postp68d23450a852b
@@ -461,14 +463,14 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
         const trxid = new ObjectId().toString();
 
+        payment.transactionId = trxid;
+
         const initiate = {
 
         store_id:'postp68d23450a852b',
         store_passwd:'postp68d23450a852b@ssl',
 
-
-
-        total_amount: payment.amount,
+        total_amount: payment.price,
         currency: 'BDT',
         tran_id: trxid, // use unique tran_id for each api call
         success_url: `${process.env.SERVER_BASE_URL}/success-payment`,
@@ -500,26 +502,59 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
 
         const iniResponse = await axios({
-            url:'https://sandbox.sslcommerz.com/gwprocess/v4/api.php',
+            url:"https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
             method: 'POST',
             data: initiate,
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                "Content-Type": "application/x-www-form-urlencoded"
             },
         })
 
       //  console.log(iniResponse,'iniresponse data inside the ssl')
-
-
-
-       const gatewayURL = iniResponse?.data?.GatewayPageURL;
-
+      
+      const saveData = await paymentCollection.insertOne(payment);
+      const gatewayURL = iniResponse?.data?.GatewayPageURL;
       //  console.log(gatewayURL,'gateway url')
 
+      // console.log(saveData,'save data inside the payment')
 
-
-       
+        res.send({gatewayURL})
       })
+
+
+      // successfull ssl payment 
+
+      app.post('/success-payment', async (req, res) => {
+
+      const paymentSuccess = req.body;
+
+
+      //  console.log(paymentSuccess,'payment success')
+
+
+      // VALIDATION CHECK PAYMENT 
+
+     const{ data } = await axios.get(`https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${paymentSuccess.val_id}&store_id=postp68d23450a852b&store_passwd=postp68d23450a852b@ssl&format=json`)
+
+       console.log(data,'is valid payment' )
+
+
+      if(data.status !== 'VALID') {
+        return res.send({message: 'invalid payment status'})
+      }
+
+      // then update payment info
+
+      const updatePayment = await paymentCollection.updateOne({transactionId:data.tran_id},{
+        $set:{
+          status: "success"
+        }
+      })
+
+      console.log(updatePayment,'update payment info')
+
+      })
+        
 
 
 
