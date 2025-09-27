@@ -44,54 +44,6 @@ async function run() {
     const paymentCollection = client.db("postPasDb").collection("payments");
 
 
-//     Store ID: postp68d23450a852b
-// Store Password (API/Secret Key): postp68d23450a852b@ssl
-
-
-// Merchant Panel URL: https://sandbox.sslcommerz.com/manage/ (Credential as you inputted in the time of registration)
-
-
- 
-// Store name: testpostpvtgt
-// Registered URL: https://post-pad.web.app/
-// Session API to generate transaction: https://sandbox.sslcommerz.com/gwprocess/v3/api.php
-// Validation API: https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?wsdl
-// Validation API (Web Service) name: https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php
- 
-// You may check our plugins available for multiple carts and libraries: https://github.com/sslcommerz
-
-
-// step-1:  initiate the payment
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
      // jwt related api
      app.post('/jwt', async (req, res) => {
         const user = req.body;
@@ -459,12 +411,13 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
       app.post('/create-ssl-payment', async (req, res) => {
         const payment = req.body;
-        // console.log('payment info', payment)
 
         const trxid = new ObjectId().toString();
 
         payment.transactionId = trxid;
 
+        
+        // step-1:  initiate the payment
         const initiate = {
 
         store_id:'postp68d23450a852b',
@@ -500,7 +453,7 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
         ship_country: 'Bangladesh',
         }
 
-
+        //2 nd step: send the request to ssl payment gateway
         const iniResponse = await axios({
             url:"https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
             method: 'POST',
@@ -510,14 +463,18 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
             },
         })
 
+        // save the payment info to the database
+        const saveData = await paymentCollection.insertOne(payment);
+        
+        // step-3: get the gateway page url to make payment
+        const gatewayURL = iniResponse?.data?.GatewayPageURL;
+        
+       // console.log('payment info', payment)
       //  console.log(iniResponse,'iniresponse data inside the ssl')
-      
-      const saveData = await paymentCollection.insertOne(payment);
-      const gatewayURL = iniResponse?.data?.GatewayPageURL;
       //  console.log(gatewayURL,'gateway url')
-
       // console.log(saveData,'save data inside the payment')
 
+       // step-4: send the gateway url to the client side
         res.send({gatewayURL})
       })
 
@@ -525,58 +482,60 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       // successfull ssl payment 
 
       app.post('/success-payment', async (req, res) => {
-
+     // step-5: after payment successfull, get the payment info from the body
       const paymentSuccess = req.body;
 
 
-      //  console.log(paymentSuccess,'payment success')
-
-
-      // VALIDATION CHECK PAYMENT 
-
+      // step-6: check the payment is valid or not form sslcommerz server 
      const{ data } = await axios.get(`https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${paymentSuccess.val_id}&store_id=postp68d23450a852b&store_passwd=postp68d23450a852b@ssl&format=json`)
-
-       console.log(data,'is valid payment' )
 
 
       if(data.status !== 'VALID') {
         return res.send({message: 'invalid payment status'})
       }
 
-      // then update payment info
-
+      // step-7: then update payment info to successfull in the database
       const updatePayment = await paymentCollection.updateOne({transactionId:data.tran_id},{
         $set:{
           status: "success"
         }
       })
 
-      console.log(updatePayment,'update payment info')
+      // make the user as member
+      const findUser = await paymentCollection.findOne({transactionId:data.tran_id})
+      //  console.log(findUser,'find user')
+
+     
+
+      const makeMember = await userCollection.updateOne({email:findUser.email},{
+        $set:{
+          role: 'gold'
+        }
+      })
+
+
+      // step-8 : if needed collect the payment object id match and delete the cart items 
+      
+      // step-9: finally redirect to the client side success page
+      res.redirect(`${process.env.LIVE_BASE_URL}/member`)
+      //  console.log(data,'is valid payment' )
+       //  console.log(paymentSuccess,'payment success')
+      // console.log(updatePayment,'update payment info')
 
       })
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // //  get payment info by email
+    //  app.get('/payments/:email', async (req, res) => {
+    //     const email = req.params.email;
+  
+    //     if (email !== req.decoded.email) {
+    //       return res.status(403).send({ message: 'forbidden access' })
+    //     }
+  
+    //     const query = { email: email };
+    //     const result = await paymentCollection.find(query).toArray();
+    //     res.send(result);
+    //   })
 
 
 
