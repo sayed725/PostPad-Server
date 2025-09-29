@@ -630,6 +630,7 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       const posts = await postCollection.estimatedDocumentCount();
       const comments = await commentCollection.estimatedDocumentCount();
       const reports = await reportCollection.estimatedDocumentCount();
+       const tags = await tagCollection.estimatedDocumentCount();
 
 
       const result = await postCollection.aggregate([
@@ -643,8 +644,38 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
         }
       ]).toArray();
 
+      const dawnVote = await postCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalVotes: {
+              $sum: { $add: ["$dawnVote"] } 
+            }
+          }
+        }
+      ]).toArray();
+
+      
+      const totalDawnVote = dawnVote[0]?.totalVotes || 0;
+      // console.log(totalDawnVote)
+
       
       const totalVotes = result[0]?.totalVotes || 0;
+      // console.log(totalVotes)
+
+       const upVote = await postCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalVotes: {
+              $sum: { $add: ["$upVote"] } 
+            }
+          }
+        }
+      ]).toArray();
+
+      
+      const totalUpVote = upVote[0]?.totalVotes || 0;
       // console.log(totalVotes)
 
 
@@ -652,7 +683,7 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
 
 
-      res.send({ users, posts, comments, reports, totalVotes });
+      res.send({ users, posts, comments, reports, totalVotes, tags , totalUpVote, totalDawnVote});
     })
 
 
