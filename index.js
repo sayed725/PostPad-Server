@@ -517,7 +517,7 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       // step-8 : if needed collect the payment object id match and delete the cart items 
       
       // step-9: finally redirect to the client side success page
-      res.redirect(`${process.env.LIVE_BASE_URL}/member`)
+      res.redirect(`https://post-pad.web.app/member`)
       //  console.log(data,'is valid payment' )
        //  console.log(paymentSuccess,'payment success')
       // console.log(updatePayment,'update payment info')
