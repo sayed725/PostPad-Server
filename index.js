@@ -82,7 +82,14 @@ async function run() {
        // users related api
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
        const searchQuery = req.query.searchQuery;
+        const sort = req.query.sort;
       //  console.log(searchQuery)
+      //  console.log(sort)
+
+
+      let options = {};
+
+      if (sort ) options = { sort: { date: sort === 'asc' ? 1 : -1 } }
 
 
        let query = {
@@ -91,7 +98,7 @@ async function run() {
           $options: 'i',
         }}
 
-        const result = await userCollection.find(query).toArray();
+        const result = await userCollection.find(query, options).toArray();
         res.send(result);
       });
 
@@ -114,6 +121,25 @@ async function run() {
         const query = { _id: new ObjectId(id) }
         const result = await userCollection.deleteOne(query);
         res.send(result);
+      })
+
+
+      // role verify 
+
+      app.get('/users/role/:email', async (req, res) => {
+        const email = req.params.email;
+
+  
+        const query = { email: email };
+
+        //console.log(query)
+
+        const user = await userCollection.findOne(query);
+        let role = 'user';
+        if (user?.role) {
+          role = user?.role;
+        }
+        res.send({ role });
       })
 
 
@@ -575,33 +601,84 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
 
 
     app.get('/report', verifyToken,verifyAdmin,async(req,res) =>{
-        const result = await reportCollection.find().toArray();
+        const result = await reportCollection.find().sort({ date: -1 }).toArray();
         res.send(result);
     })
 
-    // remove a comment 
+    // remove a comment by posting full report
 
-    app.delete('/remove-comment/:id', verifyToken,verifyAdmin, async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) }
-        const result = await commentCollection.deleteOne(query);
-        res.send(result);
-      })
+   app.post('/remove-comment', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const report = req.body;
 
-    app.delete('/remove-report/:id', verifyToken,verifyAdmin, async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) }
-        const result = await reportCollection.deleteOne(query);
-        res.send(result);
-      })
+    // Validate input
+    if (!report.reportCommentId || !report._id) {
+      return res.status(400).json({ error: 'Missing reportCommentId or report _id' });
+    }
 
-      // remove user 
+    // Delete comment
+    const commentQuery = { _id: new ObjectId(report.reportCommentId) };
+    const result_1 = await commentCollection.deleteOne(commentQuery);
 
-      app.delete('/remove-user/:email', verifyToken,verifyAdmin, async (req, res) => {
-        const email = req.params.email;
-        const query = { email: email }
-        const result = await userCollection.deleteOne(query);
-        res.send(result);
+    // Delete report
+    const reportQuery = { _id: new ObjectId(report._id) };
+    const result_2 = await reportCollection.deleteOne(reportQuery);
+
+    // Send response with results of both operations
+    res.status(200).json({
+      commentDeleted: result_1.deletedCount,
+      reportDeleted: result_2.deletedCount,
+      message: 'Comment and report deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error in /remove-comment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+      // remove user for reported comment  
+
+    app.post('/remove-user', verifyToken,verifyAdmin, async (req, res) => {
+        try {
+    const report = req.body;
+
+    // Validate input
+    if (!report.reportCommentId || !report._id) {
+      return res.status(400).json({ error: 'Missing reportCommentId or report _id' });
+    }
+
+    // Delete comment
+    const commentQuery = { _id: new ObjectId(report.reportCommentId) };
+   const result_1 = await commentCollection.deleteOne(commentQuery);
+
+    // Delete report
+    const reportQuery = { _id: new ObjectId(report._id) };
+    const result_2 = await reportCollection.deleteOne(reportQuery);
+
+    //delete user 
+    const userQuery = { email: report.reportFor };
+  const user = await userCollection.findOne(userQuery);
+
+  const result_3 = await userCollection.deleteOne(user);
+
+
+
+   //console.log(userQuery)
+
+
+
+    // Send response with results of both operations
+   res.status(200).json({
+      commentDeleted: result_1.deletedCount,
+     reportDeleted: result_2.deletedCount,
+     userDeleted: result_3.deletedCount,
+     message: 'User & Comment and report deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error in /remove-user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
       })
 
       // announcement related api
