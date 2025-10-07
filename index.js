@@ -194,13 +194,13 @@ async function run() {
 
 
 
-    //   add 3 post for a specific user 
+    //   add  post for a specific user 
 
     app.get('/post/:email', verifyToken, async (req, res) => {
         const email = req.params.email;
   
         const query = { authorEmail: email };
-        const result = await postCollection.find(query).sort({ time: -1 }).limit(3).toArray();
+        const result = await postCollection.find(query).sort({ time: -1 }).toArray();
         res.send(result);
       });
 
@@ -288,6 +288,29 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
     //     .sort({ time: -1 }).toArray();
     //     res.send(result);
     //   });
+
+        // get all the posts for admin
+    app.get('/allPosts', verifyToken, verifyAdmin, async (req, res) => {
+      const searchQuery = req.query.searchQuery;
+       const sort = req.query.sort;
+      //  console.log(searchQuery)
+      //  console.log(sort)
+
+      
+      let options = {};
+
+      if (sort ) options = { sort: { time: sort === 'asc' ? 1 : -1 } }
+
+
+      let query = {
+        authorName: {
+          $regex: searchQuery,
+          $options: 'i',
+        }}
+
+        const result = await postCollection.find(query, options).toArray();
+        res.send(result);
+      });
 
 
 
@@ -648,19 +671,27 @@ app.delete('/post/:id', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Missing reportCommentId or report _id' });
     }
 
-    // Delete comment
+  // Delete comment
     const commentQuery = { _id: new ObjectId(report.reportCommentId) };
    const result_1 = await commentCollection.deleteOne(commentQuery);
 
-    // Delete report
-    const reportQuery = { _id: new ObjectId(report._id) };
-    const result_2 = await reportCollection.deleteOne(reportQuery);
+
+
+    // Delete all report
+
+    const reportedQuery = { reportFor: report.reportFor}
+    const result_2 = await reportCollection.deleteMany(reportedQuery);
+
+    
+
+    //const reportQuery = { _id: new ObjectId(report._id) };
+   // const result_2 = await reportCollection.deleteOne(reportQuery);
 
     //delete user 
     const userQuery = { email: report.reportFor };
-  const user = await userCollection.findOne(userQuery);
+    const user = await userCollection.findOne(userQuery);
 
-  const result_3 = await userCollection.deleteOne(user);
+   const result_3 = await userCollection.deleteOne(user);
 
 
 
